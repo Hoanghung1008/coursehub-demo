@@ -159,9 +159,6 @@ def enroll_student(student_id, course_code):
     if course is None:
         return False, "Hoc phan khong ton tai"
 
-    if course["enrolled"] >= course["capacity"]:
-        return False, "Lop da du so luong"
-
     duplicated = any(
         item["student_id"] == student_id
         and item["course_code"] == course_code
@@ -170,6 +167,9 @@ def enroll_student(student_id, course_code):
 
     if duplicated:
         return False, "Sinh vien da dang ky hoc phan nay"
+
+    if course["enrolled"] >= course["capacity"]:
+        return False, "Lop da du so luong"
 
     enrollments.append(
         {
