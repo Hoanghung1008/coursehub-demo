@@ -1,0 +1,654 @@
+{
+  "info": {
+    "name": "CourseHub API - Buoi 3",
+    "description": "CourseHub API tests - FastAPI + PostgreSQL",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "01 - Health Check",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/health",
+        "header": []
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code la 200\", () => {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Response la JSON\", () => {",
+              "    pm.response.to.be.json;",
+              "});",
+              "pm.test(\"Database da ket noi\", () => {",
+              "    const data = pm.response.json();",
+              "    pm.expect(data.status).to.eql(\"ok\");",
+              "    pm.expect(data.database).to.eql(\"connected\");",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - List courses",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/courses",
+        "header": []
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code la 200\", () => {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Co it nhat 3 hoc phan\", () => {",
+              "    const data = pm.response.json();",
+              "    pm.expect(data.length).to.be.at.least(3);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Search courses",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/courses?q=web",
+        "header": []
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code la 200\", () => {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Tim thay hoc phan Web INT2204\", () => {",
+              "    const data = pm.response.json();",
+              "    pm.expect(data.some(c => c.code === \"INT2204\")).to.be.true;",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Search courses empty keyword error",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/courses?q=%20%20",
+        "header": []
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code la 400\", () => {",
+              "    pm.response.to.have.status(400);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 - Courses pagination (Bai 4)",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/courses?skip=0&limit=2",
+        "header": []
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code la 200\", () => {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Dung so luong limit 2\", () => {",
+              "    const data = pm.response.json();",
+              "    pm.expect(data.length).to.eql(2);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 - Course detail",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/courses/INT2204",
+        "header": []
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code la 200\", () => {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Dung thong tin INT2204\", () => {",
+              "    const data = pm.response.json();",
+              "    pm.expect(data.code).to.eql(\"INT2204\");",
+              "    pm.expect(data.credits).to.eql(3);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 - Course detail not found",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/courses/UNKNOWN",
+        "header": []
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code la 404\", () => {",
+              "    pm.response.to.have.status(404);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 - List lecturers (Bai 1)",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/lecturers",
+        "header": []
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code la 200\", () => {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Chua GV01 va GV02\", () => {",
+              "    const data = pm.response.json();",
+              "    pm.expect(data.some(l => l.id === \"GV01\")).to.be.true;",
+              "    pm.expect(data.some(l => l.id === \"GV02\")).to.be.true;",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "09 - List sections all",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/sections",
+        "header": []
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code la 200\", () => {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Co 4 lop hoc phan\", () => {",
+              "    const data = pm.response.json();",
+              "    pm.expect(data.length).to.eql(4);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10 - Available sections",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/sections?available_only=true",
+        "header": []
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code la 200\", () => {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Cac lop tra ve deu con cho\", () => {",
+              "    const data = pm.response.json();",
+              "",
+              "    pm.expect(data).to.be.an(\"array\");",
+              "",
+              "    data.forEach(s => {",
+              "        pm.expect(s.remaining_slots).to.be.a(\"number\");",
+              "        pm.expect(s.remaining_slots).to.be.above(0);",
+              "    });",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "11 - Section detail (Bai 2)",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/sections/WEB-01",
+        "header": []
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code la 200\", () => {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Dung thong tin WEB-01\", () => {",
+              "    const data = pm.response.json();",
+              "",
+              "    pm.expect(data.id).to.eql(\"WEB-01\");",
+              "    pm.expect(data.course_code).to.eql(\"INT2204\");",
+              "    pm.expect(data.lecturer_id).to.eql(\"GV01\");",
+              "    pm.expect(data.capacity).to.eql(3);",
+              "    pm.expect(data.enrolled).to.eql(2);",
+              "    pm.expect(data.remaining).to.eql(1);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "12 - Section detail not found (Bai 2)",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/sections/UNKNOWN",
+        "header": []
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code la 404\", () => {",
+              "    pm.response.to.have.status(404);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "13 - Update section capacity (Bai 3)",
+      "request": {
+        "method": "PATCH",
+        "url": "{{base_url}}/sections/WEB-01/capacity",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"capacity\": 4\n}"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code la 200\", () => {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Suc chua moi la 4\", () => {",
+              "    const data = pm.response.json();",
+              "    pm.expect(data.capacity).to.eql(4);",
+              "    pm.expect(data.remaining).to.eql(2);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "14 - Update section capacity conflict (Bai 3)",
+      "request": {
+        "method": "PATCH",
+        "url": "{{base_url}}/sections/WEB-01/capacity",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"capacity\": 1\n}"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code la 409\", () => {",
+              "    pm.response.to.have.status(409);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "15 - Reset section capacity to standard (Bai 3)",
+      "request": {
+        "method": "PATCH",
+        "url": "{{base_url}}/sections/WEB-01/capacity",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"capacity\": 3\n}"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code la 200\", () => {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Khoi phuc suc chua ve 3\", () => {",
+              "    const data = pm.response.json();",
+              "    pm.expect(data.capacity).to.eql(3);",
+              "    pm.expect(data.remaining).to.eql(1);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "16 - Update section capacity not found (Bai 3)",
+      "request": {
+        "method": "PATCH",
+        "url": "{{base_url}}/sections/UNKNOWN/capacity",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"capacity\": 4\n}"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code la 404\", () => {",
+              "    pm.response.to.have.status(404);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "17 - Student enrollments",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/students/22000001/enrollments",
+        "header": []
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code la 200\", () => {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Sinh vien 22000001 da dang ky 2 lop\", () => {",
+              "    const data = pm.response.json();",
+              "    pm.expect(data.length).to.eql(2);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "18 - Student enrollments not found",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/students/99999999/enrollments",
+        "header": []
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code la 404\", () => {",
+              "    pm.response.to.have.status(404);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "19 - Create enrollment",
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/enrollments",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"student_id\": \"22000004\",\n  \"class_section_id\": \"WEB-01\"\n}"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code la 201\", () => {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "pm.test(\"Dang ky thanh cong\", () => {",
+              "    const data = pm.response.json();",
+              "",
+              "    pm.expect(data.student_id).to.eql(\"22000004\");",
+              "    pm.expect(data.class_section_id).to.eql(\"WEB-01\");",
+              "    pm.expect(data.registered_at).to.exist;",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "20 - Create enrollment duplicate",
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/enrollments",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"student_id\": \"22000004\",\n  \"class_section_id\": \"WEB-01\"\n}"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code la 409\", () => {",
+              "    pm.response.to.have.status(409);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "21 - Create enrollment validation error",
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/enrollments",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"student_id\": \"123\",\n  \"class_section_id\": \"WEB-01\"\n}"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code la 422\", () => {",
+              "    pm.response.to.have.status(422);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "22 - Delete enrollment",
+      "request": {
+        "method": "DELETE",
+        "url": "{{base_url}}/enrollments/22000004/WEB-01",
+        "header": []
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code la 204\", () => {",
+              "    pm.response.to.have.status(204);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "23 - Delete enrollment not found",
+      "request": {
+        "method": "DELETE",
+        "url": "{{base_url}}/enrollments/22000004/WEB-01",
+        "header": []
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code la 404\", () => {",
+              "    pm.response.to.have.status(404);",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
