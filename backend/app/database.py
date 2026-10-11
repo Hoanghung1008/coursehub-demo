@@ -8,6 +8,24 @@ from sqlalchemy.orm import sessionmaker
 ENV_FILE = Path(__file__).resolve().parents[1] / ".env"
 load_dotenv(ENV_FILE)
 
+required_vars = (
+    "DB_USER",
+    "DB_PASSWORD",
+    "DB_NAME",
+)
+
+missing_vars = [
+    name for name in required_vars
+    if not os.getenv(name)
+]
+
+if missing_vars:
+    raise RuntimeError(
+        "Thieu bien moi truong: "
+        + ", ".join(missing_vars)
+        + ". Kiem tra backend/.env."
+    )
+
 DATABASE_URL = URL.create(
     drivername="postgresql+psycopg",
     username=os.getenv("DB_USER"),
