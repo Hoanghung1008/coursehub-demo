@@ -1,5 +1,7 @@
+
 from fastapi import Depends, FastAPI, HTTPException, Query, Response
 from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from backend.app.database import get_db
@@ -11,7 +13,12 @@ from backend.app.schemas import (
     EnrollmentResponse,
 )
 
-app = FastAPI(title="CourseHub API")
+
+app = FastAPI(
+    title="CourseHub API",
+    version="0.4.0",
+    description="API thuc hanh Buoi 4 - transaction, locking va hieu nang",
+)
 
 
 @app.get("/")
@@ -33,6 +40,7 @@ def health_check(db: Session = Depends(get_db)):
             detail="Database connection failed",
         )
 
+
 @app.get("/lecturers")
 def get_lecturers(db: Session = Depends(get_db)):
     result = db.execute(
@@ -46,10 +54,12 @@ def get_lecturers(db: Session = Depends(get_db)):
     return [dict(row) for row in result]
 
 
-
 @app.get("/courses", response_model=list[CourseResponse])
 def get_courses(
-    q: str | None = Query(default=None, description="Tim theo ma hoac ten mon hoc"),
+    q: str | None = Query(
+        default=None,
+        description="Tim theo ma hoac ten mon hoc",
+    ),
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=100, ge=1),
     db: Session = Depends(get_db),
@@ -79,9 +89,12 @@ def get_courses(
     params["limit"] = limit
     params["skip"] = skip
 
-    result = db.execute(text(sql), params).mappings().all()
-    return [dict(row) for row in result]
+    result = db.execute(
+        text(sql),
+        params,
+    ).mappings().all()
 
+    return [dict(row) for row in result]
 
 
 @app.get("/courses/{course_code}", response_model=CourseResponse)
@@ -127,8 +140,12 @@ def get_sections(
 
     sql += " ORDER BY class_id"
 
-    result = db.execute(text(sql)).mappings().all()
+    result = db.execute(
+        text(sql)
+    ).mappings().all()
+
     return [dict(row) for row in result]
+
 
 @app.get("/sections/{section_id}")
 def get_section_detail(
@@ -169,6 +186,7 @@ def get_section_detail(
         )
 
     return dict(result)
+
 
 @app.patch("/sections/{section_id}/capacity")
 def update_section_capacity(
@@ -348,18 +366,50 @@ def create_enrollment(
             },
         ).mappings().one()
 
+        db.execute(
+            text("""
+                INSERT INTO enrollment_events (
+                    student_id,
+                    class_section_id,
+                    event_type,
+                    source,
+                    dataset
+                )
+                VALUES (
+                    :student_id,
+                    :section_id,
+                    'CREATED',
+                    'api',
+                    'demo'
+                )
+            """),
+            {
+                "student_id": enrollment.student_id,
+                "section_id": enrollment.class_section_id,
+            },
+        )
+
         db.commit()
         return dict(result)
 
     except HTTPException:
         db.rollback()
         raise
+
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail="Enrollment conflicts with existing data",
+        )
+
     except Exception:
         db.rollback()
         raise HTTPException(
             status_code=500,
             detail="Failed to create enrollment",
         )
+
 
 @app.delete(
     "/enrollments/{student_id}/{class_section_id}",
@@ -371,6 +421,22 @@ def delete_enrollment(
     db: Session = Depends(get_db),
 ):
     try:
+        section = db.execute(
+            text("""
+                SELECT id
+                FROM class_sections
+                WHERE id = :section_id
+                FOR UPDATE
+            """),
+            {"section_id": class_section_id},
+        ).first()
+
+        if section is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Class section not found",
+            )
+
         result = db.execute(
             text("""
                 DELETE FROM enrollments
@@ -385,17 +451,48 @@ def delete_enrollment(
         ).first()
 
         if result is None:
-            db.rollback()
             raise HTTPException(
                 status_code=404,
                 detail="Enrollment not found",
             )
 
+        db.execute(
+            text("""
+                INSERT INTO enrollment_events (
+                    student_id,
+                    class_section_id,
+                    event_type,
+                    source,
+                    dataset
+                )
+                VALUES (
+                    :student_id,
+                    :section_id,
+                    'CANCELLED',
+                    'api',
+                    'demo'
+                )
+            """),
+            {
+                "student_id": student_id,
+                "section_id": class_section_id,
+            },
+        )
+
         db.commit()
         return Response(status_code=204)
 
     except HTTPException:
+        db.rollback()
         raise
+
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail="Enrollment conflicts with existing data",
+        )
+
     except Exception:
         db.rollback()
         raise HTTPException(
