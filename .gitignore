@@ -2,3 +2,5 @@ __pycache__/
 *.pyc
 .venv/
 .env
+# Local Postman workspace metadata
+.postman/
