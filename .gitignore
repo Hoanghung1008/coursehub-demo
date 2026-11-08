@@ -4,3 +4,10 @@ __pycache__/
 .env
 # Local Postman workspace metadata
 .postman/
+
+# React / Vite
+node_modules/
+dist/
+
+# Frontend local environment
+.env.local
